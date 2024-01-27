@@ -1,0 +1,17 @@
+load FluidR3_GM.sf2
+select 0 1 0 0
+select 1 1 0 19
+select 2 1 0 40
+select 3 1 8 14
+select 4 1 0 39
+select 5 1 0 29
+select 6 1 0 66
+select 7 1 0 104
+select 8 1 0 56
+select 9 1 128 10
+select 10 1 128 19
+select 11 1 0 109
+select 12 1 0 89
+select 13 1 0 88
+select 14 1 0 52
+select 15 1 0 124

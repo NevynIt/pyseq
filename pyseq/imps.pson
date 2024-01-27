@@ -1,0 +1,97 @@
+{
+    'imps': {
+        'imps': {
+            'APCPads': {
+                'class': 'pads_interface',
+                'module': 'pyseq.controllers.ApcKeys25'
+            },
+            'P85': {
+                'class': 'midi_interface',
+                'data': {
+                    'in_port': 'MiniFuse',
+                    'out_port': 'MiniFuse',
+                },
+                'module': 'pyseq.controllers.generic'
+            },
+            'MicroFreak': {
+                'class': 'midi_interface',
+                'data': {
+                    'in_port': 'MicroFreak',
+                    'out_port': 'MicroFreak',
+                },
+                'module': 'pyseq.controllers.generic'
+            },
+            'MPKmini': {
+                'class': 'MPKmini',
+                'data': {
+                    'in_port': 'MPK mini',
+                },
+                'module': 'pyseq.controllers.MPKmini'
+            },
+            'APCKeys': {
+                'class': 'midi_interface',
+                'data': {
+                    'in_port': 'APC Keys 25',
+                },
+                'module': 'pyseq.controllers.generic'
+            },
+            'bard': {
+                'class': 'Bard',
+                'data':{
+                    'arrangements':
+                    {
+                        'default': {
+                            'route': 'to_fs'
+                        },
+                        'to_fs': {
+                            'style': 'replace',
+                            'output': 'fs.send_midi'
+                        },
+                        'rnd_chan':{
+                            'style': 'randomize',
+                            'channel': None,
+                            'route': 'default'
+                        },
+                        'second_drums':{
+                            'style': 'replace',
+                            'channel': 9,
+                            'velexp': 3,
+                            'route': 'default'
+                        },
+                        'triad': {
+                            'style': 'chords',
+                            'notes' : (0,4,7),
+                            'route': 'pads'
+                        },
+                        'pads':{
+                            'style': 'replace',
+                            'channel': 4,
+                            'route': 'Eb_minor'
+                        },
+                        'Eb_minor':{
+                            'style': 'replace',
+                            'scale': 6,
+                            'route': 'default'
+                        }
+                    },
+                    'sources':{
+                        'MPKmini': 'to_fs',
+                        'MPKmini.9': 'to_fs',
+                        'MPKmini.1': 'rnd_chan',
+                        'MPKmini.2': 'Eb_minor',
+                        'MPKmini.10': 'triad',
+                    }
+                },
+                'module': 'pyseq.bard'
+            },
+            'enchanter': {
+                'class': 'Enchanter',
+                'module': 'pyseq.enchanter'
+            },
+            'fs': {
+                'class': 'Synth',
+                'module': 'pyseq.synths.fluidsynth'
+            }
+        }
+    }
+}

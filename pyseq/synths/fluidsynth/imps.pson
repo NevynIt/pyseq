@@ -1,0 +1,30 @@
+{
+    "pyseq.synths.fluidsynth.Synth" : {
+        "sfonts":[
+            "FluidR3_GM.sf2"
+        ],
+        "presets":{
+            0: 'Yamaha Grand Piano',
+            1: 'Church Organ',
+            2: 'Violin',
+            3: 'Church Bell',
+            4: 'Synth Bass 2',
+            5: 'Overdrive Guitar',
+            6: 'Tenor Sax',
+            7: 'Sitar',
+            8: 'Trumpet',
+            9: 'Room 2',
+            10: 'Pan Flute',
+            11: 'BagPipe',
+            12: 'Warm Pad',
+            13: 'Fantasia',
+            14: 'Ahh Choir',
+            15: 'Telephone'
+        },
+        "fs_port": 'FluidSynth',
+        "out_port": 'FluidSynth'
+    },
+    "pyseq.synths.fluidsynth.FSWrap" : {
+        'FSPath': r'C:\FluidSynth'
+    }
+}

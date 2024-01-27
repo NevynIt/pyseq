@@ -1,0 +1,48 @@
+{
+    "imps": {
+        "imps": {
+            "1": {
+                "class": "midi_interface",
+                "data": {
+                    "port_name": "MiniFuse",
+                    "type": "in/out"
+                },
+                "module": "pyseq.controllers.generic"
+            },
+            "16": {
+                "class": "Synth",
+                "module": "pyseq.synths.FluidSynth"
+            },
+            "2": {
+                "class": "midi_interface",
+                "data": {
+                    "port_name": "MicroFreak",
+                    "type": "in/out"
+                },
+                "module": "pyseq.controllers.generic"
+            },
+            "3": {
+                "class": "midi_interface",
+                "data": {
+                    "port_name": "MPK mini mk3",
+                    "type": "in"
+                },
+                "module": "pyseq.controllers.generic"
+            },
+            "4": {
+                "class": "midi_interface",
+                "data": {
+                    "port_name": "APC Keys 25",
+                    "type": "in"
+                },
+                "module": "pyseq.controllers.generic"
+            },
+            "ApcPads": {
+                "class": "pads_interface",
+                "data": {},
+                "module": "pyseq.controllers.ApcKeys25"
+            }
+        },
+        "period": 5
+    }
+}

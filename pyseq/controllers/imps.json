@@ -1,0 +1,45 @@
+{
+    "pyseq.controllers.generic.midi_interface" : {
+        "routing":[
+            {
+                "conditions":[
+                    "CC67"
+                ],
+                "target": "enchanter",
+                "transform":[
+                    "C1"
+                ],
+                "args": {}
+            },
+            {
+                "conditions":[
+                    "C1"
+                ],
+                "target": "bard",
+                "args": {
+                    "split": 1
+                }
+            },
+            {
+                "conditions":[
+                    "C2",
+                    "N60-127"
+                ],
+                "target": "bard",
+                "args": {
+                    "split": 2
+                }
+            },
+            {
+                "conditions":[
+                    "C2",
+                    "N0-59"
+                ],
+                "target": "bard",
+                "args": {
+                    "split": 3
+                }
+            }
+        ]
+    }
+}

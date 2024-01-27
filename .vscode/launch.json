@@ -1,0 +1,33 @@
+{
+    "configurations": [
+        {
+            "name": "Python: test01",
+            "type": "python",
+            "request": "launch",
+            "program": "test01.py",
+            "console": "integratedTerminal",
+            "justMyCode": true        },
+        {
+            "name": "Python: test02",
+            "type": "python",
+            "request": "launch",
+            "program": "test02.py",
+            "console": "integratedTerminal",
+            "justMyCode": true        },
+        {
+            "name": "Python: curses-demo",
+            "type": "python",
+            "request": "launch",
+            "program": "curses-demo.py",
+            "console": "externalTerminal",
+            "justMyCode": true        },
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }        
+    ]
+}
