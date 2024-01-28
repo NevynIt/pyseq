@@ -1,8 +1,10 @@
 import msvcrt
 import mido
 
+outp=[p for p in mido.get_output_names() if "FluidSynth" in p][0]
+
 # MIDI setup
-outport = mido.open_output('FluidSynth 3')
+outport = mido.open_output(outp)
 
 # Initial transposition level (0 means no transposition)
 transposition = 0

@@ -1,17 +1,24 @@
 {
     "configurations": [
         {
-            "name": "Python: test01",
+            "name": "Python: FullSeq",
             "type": "python",
             "request": "launch",
-            "program": "test01.py",
+            "program": "examples/full_seq/full_seq.py",
             "console": "integratedTerminal",
             "justMyCode": true        },
         {
-            "name": "Python: test02",
+            "name": "Python: async_tunes",
             "type": "python",
             "request": "launch",
-            "program": "test02.py",
+            "program": "examples/async_tunes.py",
+            "console": "integratedTerminal",
+            "justMyCode": true        },
+        {
+            "name": "Python: Keys 2 Midi",
+            "type": "python",
+            "request": "launch",
+            "program": "examples/keys2midi.py",
             "console": "integratedTerminal",
             "justMyCode": true        },
         {
