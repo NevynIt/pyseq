@@ -22,12 +22,12 @@
             "console": "integratedTerminal",
             "justMyCode": true        },
         {
-            "name": "Python: curses-demo",
+            "name": "Python: curses-keys",
             "type": "python",
             "request": "launch",
-            "program": "curses-demo.py",
+            "program": "examples/curses-keys.py",
             "console": "externalTerminal",
-            "justMyCode": true        },
+            "justMyCode": false        },
         {
             "name": "Python: Current File",
             "type": "python",
