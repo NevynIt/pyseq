@@ -1,5 +1,7 @@
 #include "midi_bridge.h"
 
+#include <hardware/flash.h>
+
 void setup() {
 #if defined(ARDUINO_ARCH_MBED) && defined(ARDUINO_ARCH_RP2040)
   // Manual begin() is required on core without built-in support for TinyUSB

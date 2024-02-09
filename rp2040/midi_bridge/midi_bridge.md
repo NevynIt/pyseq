@@ -48,16 +48,20 @@ multicore logic:
         - looping envelope values are calculated as part of the transformation when needes
     - if looping, keeps track of the noteon/noteoff messages it sends, to be able to send noteoffs when the loop is stopped
 
-object types - on the eeprom:
+Interesting note:
+ - rp2040 can write on its flash memory with blocks of 256 bytes, which are then accessible directly and transparently as they are mapped in memory
+ - this changes everything in how memory is loaded and used from flash
+
+object types - on the flash:
  - id is a 14 bit number stored in a 16 bit with the following mask 0b0111111101111111
     - 0xFFFF is *the* invalid ID
     - 0x0000 is used as NULL, end of lists
  - ruleset (rule list id)
     - if the first byte is 0xFF, the entry is unused
     - all rules that match are fired. when compiled, rules are sorted by the (arbitratry) match list id, so that the match is checked only once
- - rule (match list id, action, data) - total 6x 7-bit
+ - rule (match list id, action, data) - total 3x 16bit
     - if match list id == 0x0000 the previous rule was the last
-    - if action == 0x7f7f, then the action is a command, and data represents the 14-bit parameter. Commands can be:
+    - if action == 0xFFFF, then the action is a command, and data represents the 14-bit parameter. Commands can be:
         - set status variables used in message matching
         - select a different ruleset
         - change configuration parameters
@@ -66,28 +70,27 @@ object types - on the eeprom:
         - (future) arm/start/stop sampling
         - (future) start/stop sound output
     - param is interpreted by the function that implements the specific command
-    - if action != 0x7f7f, then it is a sequence list id
+    - if action != 0xFFFF, then it is a sequence list id
         - data thenepresents a transformation list id (to be performed to each message just before sending)
         - note: sequence 0x0000 is not really executed, it just creates a sequence with just the source message as is
- - match (match type, param) - total 4x 7-bit
+ - match (match type, param) - total 2x 16-bit
     - if match type == 0x0000 the previous was the last
     - match type is composed, bitwyse:
         - A. (port, cable, channel, message, data1, data2), or B. (status variable) - 1-bit
         - case A:
             - selector: one of (port, cable, channel, message, data1, data2) - 3-bit
             - comparison: one of (equal, different, inside-range, outside-range, mask) - 3-bit
-            - padding - 5 bits
             - mask elements - 2 bits (to complete the 2 missing bits from the 14-bit parameter)
         - case B:
             - categories: port/cable/channel/message/data1 specific - 5-bit mask (0b00000 = absolute status variable)
             - identifier: 6-bit (0b000000 = no variable)
             - comparison: one of (equal, different, inside-range, outside-range, mask) - 3-bit
     - param can be:
-        - 1x 7-bit value + 1x 7-bit padding
-        - 2x 7-bit min/max range
- - sequence (transformation list id (14-bits), delta ticks (14-bits)) - total 4x 7-bit
+        - 1x value
+        - 2x min/max range
+ - sequence (transformation list id, delta ticks)
     - if transformation id == 0x0000 the sequence is over
-    - if transformation id == 0x7f7f the sequence loops from the start
+    - if transformation id == 0xFFFF the sequence loops from the start
  - transformation is 4x 7-bit, bitwise:
     - if the selector/operator byte is 0x0000 the previous was the last
     - selector: one of (port, cable, channel, message, data1, data2) - 3-bit
