@@ -1,0 +1,33 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ]
+        },
+        {
+            "name": "rp2040",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:\\Users\\argio\\AppData\\Local\\Arduino15\\packages\\rp2040\\**",
+                "C:\\Users\\argio\\OneDrive\\Documenti\\Arduino\\libraries\\**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "USE_TINYUSB",
+                "ARDUINO_ARCH_RP2040"
+            ],
+            "cStandard": "c99",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

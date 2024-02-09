@@ -1,0 +1,145 @@
+# MIDI Bridge
+(configurable) denotes parameters that can be changed at compile time
+
+Hardware interfaces:
+ - 1x Serial port over USB (with 16x cables)
+ - 2x Serial ports over GPIO (with 16x cables each)
+    - (configurable) pins are by default: UART0 TX 0 RX 1 -- UART1 TX 4 RX 5
+ - 1x MIDI port over USB (with 3x cables, the system crashes if I try to add more)
+    - as only 3 'cables' can be configured on the midi port apparently, the other cables are used for other functions:
+        - anything sent out to 13 comes back from 14, and vice versa, which can be used to create crazy rules (and deadlock the system)
+        - anything sent out to 15 comes back from 16, and vice versa, which can be used to create crazy rules (and deadlock the system)
+ - (future) MIDI cable 12 controls a digital synth, which outputs over a GPIO pin (maybe using PWM) 
+ - (future) MIDI cable 11 controls a sampler, which takes inputs from one of the ADC pins
+ - (future) MIDI cable 10 control a led strip connected via spi
+ - (future) MIDI cable 8 controls an attached spi display and input through buttons or touch screen
+
+Functionalities (modules can be configured in/out at compile time to balance memory and cpu usage):
+ - filtering and routing (base - Must)
+ - transforming the messages (module - Should)
+ - sequencing (module - Should)
+ - looping envelopes (module - Could)
+ - sound synthesis (future module, using PIO and PWM)
+ - sound sampling (future module, using PIO and external memory connected via SPI)
+ - rgb leds strip control (future module, using SPI and maybe PIO)
+ - display/buttons control (future module, using SPI)
+
+Communication interface:
+ - messages are received from midi or any serial as 4 bytes, and are sent to a single processing logic, together with the source they came from
+ - everything is processed in accordance with the active routing-filtering tables
+ - ruleset 0x0000 is loaded and activated at boot
+ - sending a 0xFF aa bb cc to a serial interface changes its behaviour to allow for other interfaces than MIDI, which can be used for:
+    - debugging!
+    - up/down-loading the ruleset configurations (and all other objects)
+        - rules are prepared as human friendly text files, compiled on a pc and then sent as binary
+    - activate a different ruleset
+    - get/set the runtime values as the system runs 
+
+multicore logic:
+ - Core 0
+    - listens to messages over the 4 inputs
+    - manages sysex configuration messages (stops core 1 when activating a different ruleset)
+    - executes the matching logic, the command actions and populates sequencer slots
+        - this includes managing the status variables
+ - Core 1
+    - cycles through sequencer slots
+    - keeps track of what has to be played next for each sequencer slot
+    - transforms the notes and sends them out
+        - looping envelope values are calculated as part of the transformation when needes
+    - if looping, keeps track of the noteon/noteoff messages it sends, to be able to send noteoffs when the loop is stopped
+
+object types - on the eeprom:
+ - id is a 14 bit number stored in a 16 bit with the following mask 0b0111111101111111
+    - 0xFFFF is *the* invalid ID
+    - 0x0000 is used as NULL, end of lists
+ - ruleset (rule list id)
+    - if the first byte is 0xFF, the entry is unused
+    - all rules that match are fired. when compiled, rules are sorted by the (arbitratry) match list id, so that the match is checked only once
+ - rule (match list id, action, data) - total 6x 7-bit
+    - if match list id == 0x0000 the previous rule was the last
+    - if action == 0x7f7f, then the action is a command, and data represents the 14-bit parameter. Commands can be:
+        - set status variables used in message matching
+        - select a different ruleset
+        - change configuration parameters
+        - arm/stop sequencer looping/play
+        - start/stop looping envelopes (parameters id, running id)
+        - (future) arm/start/stop sampling
+        - (future) start/stop sound output
+    - param is interpreted by the function that implements the specific command
+    - if action != 0x7f7f, then it is a sequence list id
+        - data thenepresents a transformation list id (to be performed to each message just before sending)
+        - note: sequence 0x0000 is not really executed, it just creates a sequence with just the source message as is
+ - match (match type, param) - total 4x 7-bit
+    - if match type == 0x0000 the previous was the last
+    - match type is composed, bitwyse:
+        - A. (port, cable, channel, message, data1, data2), or B. (status variable) - 1-bit
+        - case A:
+            - selector: one of (port, cable, channel, message, data1, data2) - 3-bit
+            - comparison: one of (equal, different, inside-range, outside-range, mask) - 3-bit
+            - padding - 5 bits
+            - mask elements - 2 bits (to complete the 2 missing bits from the 14-bit parameter)
+        - case B:
+            - categories: port/cable/channel/message/data1 specific - 5-bit mask (0b00000 = absolute status variable)
+            - identifier: 6-bit (0b000000 = no variable)
+            - comparison: one of (equal, different, inside-range, outside-range, mask) - 3-bit
+    - param can be:
+        - 1x 7-bit value + 1x 7-bit padding
+        - 2x 7-bit min/max range
+ - sequence (transformation list id (14-bits), delta ticks (14-bits)) - total 4x 7-bit
+    - if transformation id == 0x0000 the sequence is over
+    - if transformation id == 0x7f7f the sequence loops from the start
+ - transformation is 4x 7-bit, bitwise:
+    - if the selector/operator byte is 0x0000 the previous was the last
+    - selector: one of (port, cable, channel, message, data1, data2) - 3-bit
+    - operator: one of (replace/lookup, arythmetic add/subtract/multiply/divide, curves gamma/exp/S, register operations store/load) - 4-bits
+    - options: over/under-flow behaviour (clip, wrap, loop), param source (literal, looping envelopes, random, lookup, registers, runtime data, ...) 7-bits
+    - params: 2x 7-bits interpreted bt the operator logic, identifying 2x 7-bit values, or ids of something
+ - lookup table (128x 7-bit entries)
+    - (configurable) up to 127x127 lookup tables are stored on flash (ids are 14-bits), default 2^10 (2^7 is also good if memory is low)
+    - if the first byte is 0xFF, the entry is unused
+ - looping envelope (attack, decay, hold, release times, min, sustain, max levels, attack, decay, release lookup functions, loop mode) - 14x 7-bits 
+    - (configurable) up to 127*127 looping envelope settings can be stored - default 2^10
+    - lookups are 2x 7-bits, everything else is 7-bits. times go exponentially from 1ms (0) to 60s (127) - formula TBD
+ - list (data[Nx 7-bit entries], continuation list id (14-bits) )
+    - if the first byte is 0xFF, then the entry is unused
+    - (configurable) up to 2^8 data bytes in a list is - 24 7-bit bytes by default (12 is also another good number if memory is low)
+    - (configurable) up to 2^14 lists are stored on flash (list ids are 14-bit) - all of them by default
+
+objects in memory:
+ - first, all the structures above are exactly the same, with limitations on how many instances:
+    - only the active ruleset is loaded in memory (together with all the lists and lookups it uses)
+    - the (configurable) number of lookup tables, lists and envelopes that are stored in memory is less - defaults to 2^11 lists, 2^7 lookups and 2^7 envelopes
+ - two semaphores s0 and s1, used to pause core1 from core0
+    - s0 and s1 are 0x00 in normal operation
+    - core0 raises s0 to ask core1 to stop
+    - core1 raises s1 when it actually stops and waits
+    - core0 waits for s1 to rise before performing any dangerous operation (like activating a different ruleset)
+    - core0 lowers s0 when it's ok to go again
+    - core1 waits for s0 to go low before lowering s1 and resuming normal operation
+ - global settings:
+    - Manufacturer ID (3x 7-bits)
+    - BPM (beats/quarternotes per minute)
+    - PPQ (ticks per quarter note)
+        - note: changing the tempo will affect the phase of all oscillators and envelopes
+    - Serial port speeds (3x 7-bits, in multiples of 9600)
+    - Heartbeat message settings
+ - sequencer slots:
+    - there are (configurable) up to 2^16 slots, which means that many independent sequences which can run in parallel - default 256
+    - each slot contains:
+        - 2x 8-bit semaphores, s0 owned by core0, s1 owned by core1
+            - if s0 == 0x00 and s1 == 0x00, the entry is available, and core0 can write on it
+            - if s0 > 0x00, the entry is ready to be played
+            - if s1 > 0x00, the sequencer is using it (it stores how many times the sequence has been looping)
+            - if s0 is 0x00 when s1 > 0x00, core0 is asking to stop the sequence asap
+            - when core1 has stopped using the sequence slot, it lowers both s0 and s1 to 0x00
+        - 4x 7-bit triggering message (used as the start of the transformation chains)
+        - 14-bit starting sequence list id
+        - 14-bit transformation list id
+        - 14-bit current list id
+        - 8-bit next index in the current list
+        - 32-bit millis time when the next message must be sent
+        - (configurable) list of active notes (each is 4x 7bits: port/cable/channel/note) - default to 96 notes
+            - port == 0xFF means unused
+ - active looping envelopes (looping env id, phase attacking/decaying/holding/releasing, t0 of the current phase in millis)
+    - (configurable) up to 2^8 active looping envelopes - default all of them
+    - looping env id == 0xFF means unused entry
