@@ -8,7 +8,7 @@
 #include "config.h"
 #include "sequencer.h"
 
-void process_msg(const port_t src, const MIDI_msg_t msg);
-void process_cmd(const port_t src, const int n);
+void process_msg(const port_t src, const MIDI_msg_t &msg);
+void process_cmd(const port_t src);
 
 #endif

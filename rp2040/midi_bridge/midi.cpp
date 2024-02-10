@@ -1,6 +1,8 @@
 #include "midi_bridge.h"
 
 Adafruit_USBD_MIDI usb_midi(3);
+
+typedef byte MIDI_msg_t[4];
 MIDI_msg_t midiMessage;
 
 void midi_task() {

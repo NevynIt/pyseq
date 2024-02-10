@@ -9,7 +9,6 @@
 #define MIDI_CABLE_NAME_3 "C3"
 
 extern Adafruit_USBD_MIDI usb_midi;
-extern MIDI_msg_t midiMessage;
 
 void midi_setup();
 void midi_task();
