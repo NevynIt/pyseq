@@ -1,6 +1,12 @@
 #include "midi_bridge.h"
 
 void load_config() {
+  //set some defaults
+  BPM = 120;
+  PPQ = 240;
+  serial_mode[port_usb] = 1;
+  active_rule_list_id = 0xFFFF;
+
 }
 
 void setup_midi() {
@@ -33,7 +39,6 @@ void setup_audio() {
 }
 
 void activate_ruleset(const byte id) {
-  active_rule_list_id = fl_ruleset[0];
 }
 
 void setup() {

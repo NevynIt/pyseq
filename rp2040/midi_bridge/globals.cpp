@@ -1,7 +1,7 @@
 #include "midi_bridge.h"
 
 Adafruit_USBD_MIDI usb_midi(3);
-byte active_rule_list_id;
+uint16_t active_rule_list_id;
 byte serial_mode[3];
 MIDI_msg_t midiMessage;
 byte cmd_buffer[3][MAX_CMD_SIZE*2];
@@ -14,3 +14,5 @@ byte BPM;
 uint16_t PPQ;
 seq_slot_t seq_slots[SEQ_SLOT_NUM];
 active_envelope_t active_envelopes[ACTIVE_ENVELOPE_NUM];
+sr_data_t sr_data;
+// NOTE: fl_data is defined as a macro

@@ -1,6 +1,8 @@
 #ifndef MIDI_BRIDGE_DATA_H
 #define MIDI_BRIDGE_DATA_H
 
+#include <Arduino.h>
+
 typedef byte MIDI_msg_t[4];
 
 typedef enum{
@@ -11,6 +13,11 @@ typedef enum{
 } port_t;
 
 typedef byte ruleset_t;
+
+#define ADC_BITS 12
+typedef byte compr_t[(1u << ADC_BITS)];
+
+typedef uint16_t decompr_t[256];
 
 typedef struct {
   uint16_t match, action, data;
@@ -68,6 +75,10 @@ typedef struct {
   byte phase;
   uint32_t t0;
 } active_envelope_t;
+
+typedef struct {
+  byte l,r;
+} sample_t;
 
 // typedef struct {
 //   ID_t ID;
