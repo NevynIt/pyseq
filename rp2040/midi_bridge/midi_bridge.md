@@ -9,8 +9,8 @@
     - as only 3 'cables' can be configured on the midi port apparently, the other cables are used for other functions:
         - anything sent out to 13 comes back from 14, and vice versa, which can be used to create crazy rules (and deadlock the system)
         - anything sent out to 15 comes back from 16, and vice versa, which can be used to create crazy rules (and deadlock the system)
- - (future) audio output over a GPIO PIN using PWM controlled by PIO, controlled by a digital synth, controlled by messages over MIDI cable 12
- - (future) audio input over a GPIO ADC PIN, controlled by PIO, controlled by a sampler, controlled by messages over MIDI cable 11
+ - (future) stereo audio output over two GPIO PINs using PWM, controlled by a digital synth, controlled by messages over MIDI cable 12
+ - (future) stereo audio input over a GPIO ADC PIN using PWM, controlled by a sampler, controlled by messages over MIDI cable 11
  - (future) RGB led strip, connected via SPI, controlled by a visualizer, controlled by messages over MIDI cable 10
  - (future) LCD TFT screen (possibly with buttons or touch), controlled by a visualizer, controlled by messages over MIDI cable 9
 
@@ -42,13 +42,19 @@ modules can be configured in/out at compile time to balance memory and cpu usage
     - manages configuration messages (stops core 1 when storing data or activating a different ruleset)
     - executes the matching logic, the command actions and populates sequencer slots
         - this includes managing the 'status variables'
+    - executes the interrupt that manages stereo audio I/O
  - Core 1
     - cycles through sequencer slots
     - keeps track of what has to be played next for each sequencer slot
     - transforms the notes and sends them out
         - looping envelope values are calculated as part of the transformation when needes
     - if looping, keeps track of the noteon/noteoff messages it sends, to be able to send noteoffs when the loop is stopped
-    - (future) fills the looping buffer for audio output of the synth, which is read by PIO and sent as PWM
+    - (future) fills the looping buffers for audio output of the synth, which is sent as PWM by an interrupt in core0
+ - PWM
+    - generates an interrupt at FREQ Hz so that core0 can sample two ADCs to form a stereo pair. (default 22100 Hz)
+    - the samples go continuously to a fixed length circular array (default 2x FREQ bytes)
+    - at the same time, two channel levels of another PWM are set to play the contents of another fixed length circular array (same size)
+    - the samples are scaled with a compression enhancer (A-law style) whose lookup table is stored in flash
 
 ### **Memory allocation**
 assuming 2MB flash on the rp2040, each page is 256 bytes
@@ -60,7 +66,9 @@ Page start|Page size|Page end|Content
 4129|2048|6177|65535 lists (8 per page)
 6177|1024|7201|1024 lookup tables
 7201|64|7265|1024 looping envelopes (16 per page)
-7265|927|8192|230k of Audio samples
+7265|910|8170|230k of Audio samples
+8177|2|8178|8 to 16 bit de-compressor lookup table
+8178|16|8192|16 to 8 bit compressor lookup table
 
 object types - on the flash:
  - id is 16 bit
@@ -112,7 +120,7 @@ object types - on the flash:
  - looping envelope (attack, decay, hold, release times, min, sustain, max levels, attack, decay, release lookup functions, loop mode, ...) - 16x 8-bits 
     - (configurable) up to 2^16 looping envelope settings can be stored - default 2^10
     - times go exponentially from 1ms (0) to 60s (255) - the formula to get the number of ms is: f(x) = 1.0441^x 
- - list (data[Nx 8-bit entries], continuation list id (16-bits) )
+ - list (continuation list id (16-bits), data[Nx 8-bit entries])
     - if the first bytes are 0xFFFF, then the entry is unused
     - (configurable) up to 2^8 data bytes in a list is - 30 8-bit bytes by default
     - (configurable) up to 2^14 lists are stored on flash - all of them by default
@@ -148,16 +156,14 @@ objects in memory:
             - if s0 is 0x00 when s1 > 0x00, core0 is asking to stop the sequence asap
             - when core1 has stopped using the sequence slot, it lowers both s0 and s1 to 0x00
         - 4x 7-bit triggering message (used as the start of the transformation chains)
-        - 14-bit starting sequence list id
-        - 14-bit transformation list id
-        - 14-bit current list id
+        - 16-bit starting sequence list id
+        - 16-bit transformation list id
+        - 16-bit current list id
         - 8-bit next index in the current list
         - 32-bit millis time when the next message must be sent
-        - (configurable) list of active notes (each is 4x 7bits: port/cable/channel/note) - default to 96 notes
+        - (configurable) list of active notes (each is 4x 8bits: port/cable/channel/note) - default to 96 notes
             - port == 0xFF means unused
  - active looping envelopes (looping env id, phase attacking/decaying/holding/releasing, t0 of the current phase in millis)
     - (configurable) up to 2^8 active looping envelopes - default all of them
     - looping env id == 0xFF means unused entry
- - (future) circular audio buffer that is being played
-    - the buffer is read via dma by the PIO and sent as PWM on a pin for audio output
-    - core 1 populates the buffer as needed, periodically, before it's fully consumed by the PIO
+ - (future) circular audio buffers (2x stereo 8-bit, configurable length)
