@@ -54,7 +54,7 @@ modules can be configured in/out at compile time to balance memory and cpu usage
     - generates an interrupt at FREQ Hz so that core0 can sample two ADCs to form a stereo pair. (default 22100 Hz)
     - the samples go continuously to a fixed length circular array (default 2x FREQ bytes)
     - at the same time, two channel levels of another PWM are set to play the contents of another fixed length circular array (same size)
-    - the samples are scaled with a compression enhancer (A-law style) whose lookup table is stored in flash
+    - the samples are scaled with a compession enhancer (A-law style) whose lookup table is stored in flash
 
 ### **Memory allocation**
 assuming 2MB flash on the rp2040, each page is 256 bytes
@@ -67,8 +67,8 @@ Page start|Page size|Page end|Content
 6177|1024|7201|1024 lookup tables
 7201|64|7265|1024 looping envelopes (16 per page)
 7265|910|8170|230k of Audio samples
-8177|2|8178|8 to 16 bit de-compressor lookup table
-8178|16|8192|16 to 8 bit compressor lookup table
+8177|2|8178|8 to 16 bit de-compessor lookup table
+8178|16|8192|16 to 8 bit compessor lookup table
 
 object types - on the flash:
  - id is 16 bit
