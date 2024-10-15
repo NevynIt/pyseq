@@ -12,22 +12,18 @@
             ]
         },
         {
-            "name": "rp2040",
+            "name": "Pico",
             "includePath": [
-                "${workspaceFolder}/**",
-                "C:\\Users\\argio\\AppData\\Local\\Arduino15\\packages\\rp2040\\**",
-                "C:\\Users\\argio\\OneDrive\\Documenti\\Arduino\\libraries\\**"
+              "${workspaceFolder}/**",
+              "${env:PICO_SDK_PATH}/**"
             ],
-            "defines": [
-                "_DEBUG",
-                "UNICODE",
-                "_UNICODE",
-                "USE_TINYUSB",
-                "ARDUINO_ARCH_RP2040"
-            ],
-            "cStandard": "c99",
-            "cppStandard": "c++17"
-        }
+            "defines": [],
+            "compilerPath": "${env:PICO_INSTALL_PATH}/gcc-arm-none-eabi/bin/arm-none-eabi-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++11",
+            "intelliSenseMode": "linux-gcc-arm",
+            "configurationProvider": "ms-vscode.cmake-tools"
+          }
     ],
     "version": 4
 }

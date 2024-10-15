@@ -1,7 +1,7 @@
 #ifndef MIDI_BRIDGE_DATA_H
 #define MIDI_BRIDGE_DATA_H
 
-#include <Arduino.h>
+#include <stdlib.h>
 
 typedef byte MIDI_msg_t[4];
 

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pressure/Velocity to Color converter</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        padding: 50px;
+      }
+      .color-box {
+        width: 100px;
+        height: 100px;
+        margin: 20px auto;
+      }
+      .slider {
+        margin: 10px 0;
+      }
+      .label {
+        display: inline-block;
+        width: 100px;
+      }
+      .matrix {
+        margin-top: 30px;
+      }
+      .matrix-row {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 5px;
+      }
+      .matrix-color {
+        width: 30px;
+        height: 30px;
+        border: 1px solid #ccc;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Pressure/Velocity to Color converter</h2>
+    <div class="color-box" id="colorBox"></div>
+
+    <label class="label">Velocity (Lightness)</label>
+    <input
+      type="range"
+      class="slider"
+      id="velocitySlider"
+      min="0"
+      max="127"
+      value="63"
+    />
+    <span id="velocityValue">63</span>
+    <br />
+
+    <label class="label">Pressure (Hue and Saturation Lookup)</label>
+    <div class="input-group">
+      <button id="decreasePressure">-1</button>
+      <input type="number" id="pressureInput" min="0" max="127" value="63" />
+      <button id="increasePressure">+1</button>
+    </div>
+    <br />
+
+    <!-- Visualization for Hue and Saturation (not inputs) -->
+    <label class="label">Hue</label>
+    <span id="hueValue">0</span>
+    <br />
+    <label class="label">Saturation</label>
+    <span id="saturationValue">100</span>
+    <br />
+
+    <!-- Color Matrix -->
+    <div class="matrix" id="colorMatrix"></div>
+
+    <script>
+      const colorBox = document.getElementById("colorBox");
+      const velocitySlider = document.getElementById("velocitySlider");
+      const pressureInput = document.getElementById("pressureInput");
+      const decreasePressureBtn = document.getElementById("decreasePressure");
+      const increasePressureBtn = document.getElementById("increasePressure");
+      const hueValue = document.getElementById("hueValue");
+      const saturationValue = document.getElementById("saturationValue");
+
+      const hues = [];
+      const saturations = [];
+
+      // Initialize the arrays
+      function initializeHuesAndSaturations() {
+        const hueStep = 360 / 128; // 128 different shades of hue
+
+        for (let i = 0; i < 128; i++) {
+          // Set the hue by distributing evenly across 360 degrees
+          const hue = Math.floor(i * hueStep);
+          hues.push(hue);
+
+          // Determine the saturation based on the index
+          let saturation;
+          if (i % 2 === 0) {
+            saturation = 100; // Maximum saturation
+          } else if (i % 4 === 1) {
+            saturation = (100 / 7) * 6; // Slightly reduced saturation
+          } else if (i % 8 === 3) {
+            saturation = (100 / 7) * 5;
+          } else if (i % 16 === 7) {
+            saturation = (100 / 7) * 4;
+          } else if (i % 32 === 15) {
+            saturation = (100 / 7) * 3;
+          } else if (i % 64 === 31) {
+            saturation = (100 / 7) * 2;
+          } else if (i % 128 === 63) {
+            saturation = (100 / 7) * 1;
+          } else {
+            saturation = (100 / 6) * 0; // Lowest saturation
+          }
+          saturations.push(saturation);
+        }
+      }
+
+      function printCStyleArrays() {
+        // Convert the hues array to C syntax
+        let huesArray = "int hues[128] = { ";
+        hues.forEach((hue, index) => {
+          huesArray += hue;
+          if (index < hues.length - 1) {
+            huesArray += ", ";
+          }
+        });
+        huesArray += " };";
+
+        // Convert the saturations array to C syntax
+        let saturationsArray = "int saturations[128] = { ";
+        saturations.forEach((saturation, index) => {
+          saturationsArray += Math.round(saturation); // Rounding saturation values to integer
+          if (index < saturations.length - 1) {
+            saturationsArray += ", ";
+          }
+        });
+        saturationsArray += " };";
+
+        // Create a div at the bottom of the page to show the arrays
+        const outputDiv = document.createElement("div");
+        outputDiv.style.marginTop = "20px";
+        outputDiv.style.textAlign = "left";
+        outputDiv.style.fontFamily = "monospace";
+        outputDiv.style.whiteSpace = "pre-wrap"; // Preserve whitespace formatting
+
+        // Add the C arrays to the div
+        outputDiv.innerHTML = `<strong>C-style arrays:</strong><br>${huesArray}<br><br>${saturationsArray}`;
+
+        // Append the div to the body of the HTML page
+        document.body.appendChild(outputDiv);
+      }
+
+      initializeHuesAndSaturations();
+      printCStyleArrays();
+
+      function hslToRgb(h, s, l) {
+        s /= 100;
+        l /= 100;
+        let c = (1 - Math.abs(2 * l - 1)) * s;
+        let x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+        let m = l - c / 2;
+        let r = 0,
+          g = 0,
+          b = 0;
+
+        if (0 <= h && h < 60) {
+          r = c;
+          g = x;
+          b = 0;
+        } else if (60 <= h && h < 120) {
+          r = x;
+          g = c;
+          b = 0;
+        } else if (120 <= h && h < 180) {
+          r = 0;
+          g = c;
+          b = x;
+        } else if (180 <= h && h < 240) {
+          r = 0;
+          g = x;
+          b = c;
+        } else if (240 <= h && h < 300) {
+          r = x;
+          g = 0;
+          b = c;
+        } else if (300 <= h && h < 360) {
+          r = c;
+          g = 0;
+          b = x;
+        }
+
+        r = Math.round((r + m) * 255);
+        g = Math.round((g + m) * 255);
+        b = Math.round((b + m) * 255);
+
+        return `rgb(${r}, ${g}, ${b})`;
+      }
+
+      function updateColor(pressure) {
+        const velocity = velocitySlider.value;
+
+        if (pressure < 0) pressure = 0;
+        if (pressure > 127) pressure = 127;
+
+        pressureInput.value = pressure;
+
+        // Lookup hue and saturation based on pressure value
+        const h = hues[pressure];
+        const s = saturations[pressure];
+        const l = Math.floor((velocity / 127) * 100); // Map velocity to lightness
+
+        velocityValue.textContent = velocity;
+        hueValue.textContent = h;
+        saturationValue.textContent = s;
+
+        const rgbColor = hslToRgb(h, s, l);
+        colorBox.style.backgroundColor = rgbColor;
+      }
+
+      velocitySlider.addEventListener("input", () => {
+        updateColor(parseInt(pressureInput.value, 10));
+      });
+
+      pressureInput.addEventListener("input", () => {
+        updateColor(parseInt(pressureInput.value, 10));
+      });
+
+      increasePressureBtn.addEventListener("click", () => {
+        let pressure = parseInt(pressureInput.value, 10);
+        pressure = Math.min(127, pressure + 1);
+        updateColor(pressure);
+      });
+
+      decreasePressureBtn.addEventListener("click", () => {
+        let pressure = parseInt(pressureInput.value, 10);
+        pressure = Math.max(0, pressure - 1);
+        updateColor(pressure);
+      });
+
+      // Create the color matrix based on saturation and hues
+      function createColorMatrix() {
+        const colorMatrix = document.getElementById("colorMatrix");
+        colorMatrix.innerHTML = ""; // Clear previous content
+
+        let hueIndex = 0;
+
+        // Create an 8x8 matrix
+        for (let row = 0; row < 8; row++) {
+          const matrixRow = document.createElement("div");
+          matrixRow.classList.add("matrix-row");
+
+          for (let col = 0; col < 16; col++) {
+            const colorBox = document.createElement("div");
+            colorBox.classList.add("matrix-color");
+
+            // Use the hue and saturation for the current index
+            const hue = hues[hueIndex];
+            const saturation = saturations[hueIndex];
+            const rgbColor = hslToRgb(hue, saturation, 50); // Lightness fixed at 50%
+
+            // Set the background color for the box
+            colorBox.style.backgroundColor = rgbColor;
+
+            // Add the index as a label for the color box (for clarity)
+            colorBox.textContent = hueIndex;
+
+            // Add the click event to select the color based on the index
+            colorBox.dataset.pressure = hueIndex; // Store pressure value
+            colorBox.addEventListener("click", () => {
+              updateColor(parseInt(colorBox.dataset.pressure, 10)); // Set pressure based on click
+            });
+
+            matrixRow.appendChild(colorBox);
+            hueIndex++; // Move to the next index
+          }
+
+          colorMatrix.appendChild(matrixRow);
+        }
+      }
+
+      createColorMatrix();
+    </script>
+  </body>
+</html>
